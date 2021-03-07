@@ -310,7 +310,11 @@
         >
           <div class="row">
             <div class="col-3 px- pt-2">
-              <select v-model="contactinfo[index].type" style="color:gray">
+              <select
+                v-model="contactinfo[index].type"
+                style="color:gray"
+                required
+              >
                 <option disabled value="">Account</option>
                 <option v-for="item in account" :value="item" :key="item">
                   {{ item }}
@@ -367,8 +371,9 @@
       </div>
     </div>
 
-    
-    <button class="btn btn-danger" @click="submitForm()">Generate PDF</button>
+    <button class="btn btn-info" @click="submitForm()">Create CV</button
+    >{{ "   " }}
+    <button class="btn btn-danger" @click="eraser()">ضد القشرة Clear</button>
   </div>
 </template>
 
@@ -381,7 +386,7 @@ export default {
   data() {
     return {
       name: "",
-      checkImage:false,
+      checkImage: false,
       ll: "",
       selectedFile: null,
       abouteme: "",
@@ -421,6 +426,17 @@ export default {
     };
   },
   methods: {
+    eraser() {
+      this.name = "";
+      this.abouteme = "";
+      this.acadmicBackground = [{}];
+      this.experience = [{}];
+      this.skills = [{}];
+      this.certifcates = [{}];
+      this.$refs.fileupload.value = null;
+
+      this.accomplishments = [{}];
+    },
     onFileSelected(event) {
       if (event.target.files[0].size > 600000) {
         alert("Image Size more 500KB");
@@ -429,7 +445,7 @@ export default {
       }
 
       this.selectedFile = event.target.files[0];
-      this.checkImage=true
+      this.checkImage = true;
 
       console.log(event);
     },
@@ -506,9 +522,8 @@ export default {
         return 0;
       }
       const fd = new FormData();
-      if (this.selectedFile != null ) {
+      if (this.selectedFile != null) {
         fd.append("image", this.selectedFile);
-
       }
       fd.append("checkImage", JSON.stringify(this.checkImage));
       fd.append("name", JSON.stringify(this.name));
@@ -519,18 +534,48 @@ export default {
       fd.append("certifcates", JSON.stringify(this.certifcates));
       fd.append("contactinfo", JSON.stringify(this.contactinfo));
       fd.append("accomplishments", JSON.stringify(this.accomplishments));
+      // this.name="";
+      // this.abouteme="";
+      // this.acadmicBackground=[{}];
+      // this.experience=[{}];
+      // this.skills=[{}];
+      // this.certifcates=[{}];
+      // // this.contactinfo=[{}];
+      // this.accomplishments=[{}];
 
-      axios.post("https://makeyourbyareeg.herokuapp.com/", fd, {}).then((response) => {
-        var fileURL = window.URL.createObjectURL(new Blob([response.data]));
-        var fileLink = document.createElement("a");
+      // axios.post("http://127.0.0.1:5000/", fd, {}).then((response) => {
+      axios
+        .post("http://127.0.0.1:5000/", fd, {
+          responseType: 'blob'
+        })
+          .then(response => response.data)
+    .then(blob => {
+      const data = URL.createObjectURL(blob)
+      var link = document.createElement('a')
+      link.href = data
+      link.target = '_blank'
+      link.click()
+      window.URL.revokeObjectURL(blob)
+    })
+    .catch((error) => {
+      console.log(error)
+    })
+        // .then((response) => {
+        //   console.log(response);
+        //   var fileURL = URL.createObjectURL(new Blob([response.data]));
+        //   var fileLink = document.createElement("a");
 
-        fileLink.href = fileURL;
-        fileLink.setAttribute("download",'Areeg'+new Date().toISOString().slice(0, 10)+'.pdf');
-        document.body.appendChild(fileLink);
-        console.log(response.data)
-
-        fileLink.click();
-      });
+        //   fileLink.href = fileURL;
+        //   fileLink.target='_blank'
+        //   fileLink.click();
+        //   // fileLink.setAttribute(
+        //   //   "download",
+        //   //   this.name + new Date().toISOString().slice(0, 10) + ".pdf"
+        //   // );
+        //   // document.body.appendChild(fileLink);
+          
+        //   window.URL.revokeObjectURL(response);
+        // });
     },
   },
 };
@@ -559,11 +604,9 @@ button {
   font-size: revert;
 }
 
-
-
 .back {
   background: rgba(247, 248, 247, 0.9); /* Green background with 30% opacity */
-  margin-top:20px;
+  margin-top: 20px;
   padding: 16px;
   /* height: 10% !; */
 }
